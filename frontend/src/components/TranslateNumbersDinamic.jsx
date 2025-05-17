@@ -1,13 +1,32 @@
+// src/components/TranslateNumbersDinamic.js
 import React, { useRef, useEffect, useState } from 'react';
 import axios from 'axios';
+import {
+  Box,
+  Typography,
+  Button,
+  Paper,
+  Stack
+} from '@mui/material';
+import { styled } from '@mui/system';
 
-const PredictRightHand = () => {
+const StyledVideoWrapper = styled(Box)(({ theme }) => ({
+  border: `4px solid rgba(29, 99, 227, 0.96)`,
+  borderRadius: '16px',
+  overflow: 'hidden',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+  display: 'inline-block',
+  backgroundColor: '#000',
+  marginBottom: theme.spacing(2),
+}));
+
+const TranslateNumbersDinamic = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const intervalRef = useRef(null);
 
-  const [message, setMessage] = useState('Pulsa "Iniciar Predicción"');
+  const [message, setMessage] = useState('Pulsa "Iniciar Traducción"');
   const [label, setLabel] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
   const [translation, setTranslation] = useState('');
@@ -46,12 +65,12 @@ const PredictRightHand = () => {
       const data = res.data;
 
       if (data.status === 'collecting') {
-        setMessage(`Recopilando ${data.collected}/50…`);
+        setMessage(`📷 Recopilando ${data.collected}/50…`);
       } else if (data.status === 'predicted') {
         setLabel(data.label);
         setMessage(`✅ Traducción: ${data.label}`);
         setTranslation(`¡Listo! Traducción: ${data.label}`);
-        stopSession(); // detener al completar predicción
+        stopSession();
       } else if (data.status === 'error') {
         setMessage('❌ Error: ' + data.message);
         stopSession();
@@ -64,21 +83,21 @@ const PredictRightHand = () => {
   };
 
   const startSession = async () => {
-    stopSession(); // reiniciar todo
+    stopSession();
     setLabel(null);
+    setTranslation('');
     setMessage('Inicializando cámara…');
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       streamRef.current = stream;
 
-      // Esperar a que el videoRef esté montado
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         setIsRunning(true);
-        setMessage('Recopilando 0/50…');
-        intervalRef.current = setInterval(sendFrame, 200); // cada 200ms
+        setMessage('📷 Recopilando 0/50…');
+        intervalRef.current = setInterval(sendFrame, 200);
       } else {
         setMessage('Error: cámara no inicializada.');
       }
@@ -89,29 +108,58 @@ const PredictRightHand = () => {
   };
 
   useEffect(() => {
-    return () => stopSession(); // limpiar al desmontar
+    return () => stopSession();
   }, []);
 
   return (
-    <div style={{ textAlign: 'center' }}>
-      <h2>Reconocimiento con Mano Derecha (LSTM 50 frames)</h2>
-      {translation && (
-        <div style={{ marginBottom: '0.5rem', fontWeight: 'bold', fontSize: '1.2rem', color: '#2c3e50' }}>
-          {translation}
-        </div>
-      )}
+    <Box display="flex" justifyContent="center" mt={4}>
+      <Paper elevation={6} sx={{ p: 4, borderRadius: 3, maxWidth: 700, width: '100%', textAlign: 'center' }}>
+        <Typography variant="h5" fontWeight="bold" gutterBottom>
+          Traducir del 6 al 9
+        </Typography>
 
-      <video ref={videoRef} style={{ width: '480px', marginBottom: '10px' }} />
+        {translation && (
+          <Typography
+            variant="subtitle1"
+            sx={{
+              mb: 2,
+              fontWeight: 600,
+              color: 'success.main'
+            }}
+          >
+            {translation}
+          </Typography>
+        )}
 
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
+        <StyledVideoWrapper>
+          <video
+            ref={videoRef}
+            style={{
+              width: '480px',
+              transform: 'scaleX(-1)',
+              display: 'block'
+            }}
+          />
+        </StyledVideoWrapper>
 
-      <p>{message}</p>
+        <canvas ref={canvasRef} style={{ display: 'none' }} />
 
-      <button onClick={startSession}>
-        {isRunning ? 'Reiniciar' : 'Iniciar Predicción'}
-      </button>
-    </div>
+        <Typography variant="body1" sx={{ mb: 2, color: 'text.secondary' }}>
+          {message}
+        </Typography>
+
+        <Stack direction="row" justifyContent="center">
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={startSession}
+          >
+            {isRunning ? '🔄 Reiniciar' : '🎬 Iniciar Traducción'}
+          </Button>
+        </Stack>
+      </Paper>
+    </Box>
   );
 };
 
-export default PredictRightHand;
+export default TranslateNumbersDinamic;

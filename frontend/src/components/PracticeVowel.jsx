@@ -1,36 +1,51 @@
 import React, { useRef, useEffect, useState } from 'react';
 import axios from 'axios';
+import { Box, Typography, Button, Paper } from '@mui/material';
+import { styled } from '@mui/system';
 
 const vowels = ['A', 'E', 'I', 'O', 'U'];
+
+const StyledVideoWrapper = styled(Box)(({ theme }) => ({
+  border: `4px solid rgba(29, 99, 227, 0.96)`,
+  borderRadius: '16px',
+  overflow: 'hidden',
+  boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+  backgroundColor: '#000',
+  margin: 'auto',
+  width: 480,
+}));
 
 const PracticeVowels = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const intervalRef = useRef(null);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [feedback, setFeedback] = useState('Haz la seña de la vocal mostrada');
   const [prediction, setPrediction] = useState('');
   const [isCorrect, setIsCorrect] = useState(false);
-  const intervalRef = useRef(null);
 
   useEffect(() => {
     navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
-      videoRef.current.srcObject = stream;
-      videoRef.current.play();
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
     });
 
     startDetection();
 
     return () => {
       stopDetection();
-      videoRef.current?.srcObject?.getTracks().forEach(t => t.stop());
+      if (videoRef.current?.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach(t => t.stop());
+      }
     };
   }, [currentIndex]);
 
   const startDetection = () => {
     stopDetection();
-    intervalRef.current = setInterval(() => {
-      captureAndPredict();
-    }, 1000);
+    intervalRef.current = setInterval(captureAndPredict, 1000);
   };
 
   const stopDetection = () => {
@@ -45,6 +60,8 @@ const PracticeVowels = () => {
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
@@ -69,15 +86,15 @@ const PracticeVowels = () => {
   const nextVowel = () => {
     if (currentIndex < vowels.length - 1) {
       setCurrentIndex(prev => prev + 1);
+      resetState();
     }
-    resetState();
   };
 
   const prevVowel = () => {
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
+      resetState();
     }
-    resetState();
   };
 
   const retry = () => {
@@ -95,26 +112,61 @@ const PracticeVowels = () => {
   const imageSrc = `/vowels/${currentVowel.toLowerCase()}.png`;
 
   return (
-    <div style={{ textAlign: 'center' }}>
-      <h2>Práctica de Vocales</h2>
-      <h3>Haz la seña de la vocal:</h3>
+    <Box sx={{ textAlign: 'center', maxWidth: 700, mx: 'auto', mt: 5, px: 2 }}>
+      <Paper elevation={5} sx={{ p: 4, borderRadius: 3 }}>
+        <Typography variant="h4" fontWeight="bold" gutterBottom>
+          Práctica de Vocales
+        </Typography>
+        <Typography variant="h6" gutterBottom>
+          Haz la seña de la vocal:
+        </Typography>
 
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
-        <div style={{ fontSize: '64px' }}>{currentVowel}</div>
-        <img src={imageSrc} alt={currentVowel} style={{ width: '100px', height: '100px' }} />
-      </div>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 4, mb: 3 }}>
+          <Typography variant="h1" fontWeight="bold" color="primary">
+            {currentVowel}
+          </Typography>
+          <Box
+            component="img"
+            src={imageSrc}
+            alt={currentVowel}
+            sx={{ width: 100, height: 100, borderRadius: 2, boxShadow: 3 }}
+          />
+        </Box>
 
-      <video ref={videoRef} style={{ width: '480px' }} />
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
-      <p><strong>Predicción:</strong> {prediction}</p>
-      <p style={{ color: isCorrect ? 'green' : 'red' }}>{feedback}</p>
+        <StyledVideoWrapper>
+          <video
+            ref={videoRef}
+            style={{ width: '100%', transform: 'scaleX(-1)', display: 'block' }}
+            autoPlay
+            muted
+          />
+        </StyledVideoWrapper>
 
-      <div style={{ marginTop: '20px' }}>
-        <button onClick={prevVowel} disabled={currentIndex === 0}>Anterior</button>
-        <button onClick={retry}>Intentar de nuevo</button>
-        <button onClick={nextVowel} disabled={!isCorrect}>Siguiente</button>
-      </div>
-    </div>
+        <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+        <Typography variant="subtitle1" sx={{ mt: 2 }}>
+          <strong>Traducción:</strong> {prediction || '...'}
+        </Typography>
+        <Typography
+          variant="subtitle1"
+          sx={{ mt: 1, color: isCorrect ? 'success.main' : 'error.main', fontWeight: 'medium' }}
+        >
+          {feedback}
+        </Typography>
+
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center', gap: 2 }}>
+          <Button variant="contained" onClick={prevVowel} disabled={currentIndex === 0}>
+            Anterior
+          </Button>
+          <Button variant="outlined" onClick={retry}>
+            Intentar de nuevo
+          </Button>
+          <Button variant="contained" onClick={nextVowel} disabled={!isCorrect}>
+            Siguiente
+          </Button>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
 
