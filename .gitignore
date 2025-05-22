@@ -39,3 +39,4 @@ frontend/dist/
 # === OS / System Files ===
 *.DS_Store
 *.idea/
+node_modules
