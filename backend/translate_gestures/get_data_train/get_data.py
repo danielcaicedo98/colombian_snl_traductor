@@ -10,11 +10,20 @@ mp_holistic = mp.solutions.holistic
 holistic = mp_holistic.Holistic()
 mp_drawing = mp.solutions.drawing_utils
 
-SAVE_DIR = "sequences/gracias"  # Cambia según el gesto
-os.makedirs(SAVE_DIR, exist_ok=True)
-cap = cv2.VideoCapture(0)
-sequence = deque(maxlen=50)  # 50 frames por secuencia
-seq_count = 0
+def select_gesture():
+    """Permite seleccionar qué gesto de navegación capturar"""
+    print("\nSelecciona el gesto a capturar:")
+    for i, (gesture, description) in enumerate(NAVIGATION_GESTURES.items(), 1):
+        print(f"{i}. {description} ({gesture})")
+    
+    while True:
+        try:
+            choice = int(input("Opción (1-2): "))
+            if 1 <= choice <= len(NAVIGATION_GESTURES):
+                return list(NAVIGATION_GESTURES.keys())[choice-1]
+            print("Opción inválida. Intenta nuevamente.")
+        except ValueError:
+            print("Por favor ingresa un número.")
 
 def extract_keypoints(results):
     pose = []
