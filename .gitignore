@@ -40,3 +40,5 @@ frontend/dist/
 *.DS_Store
 *.idea/
 env/
+
+venv12
