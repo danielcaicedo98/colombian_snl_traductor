@@ -10,7 +10,7 @@ mp_holistic = mp.solutions.holistic
 holistic = mp_holistic.Holistic()
 mp_drawing = mp.solutions.drawing_utils
 
-SAVE_DIR = "sequences/gracias"  # Cambia según el gesto
+SAVE_DIR = "sequences/derecha"  # Cambia según el gesto
 os.makedirs(SAVE_DIR, exist_ok=True)
 cap = cv2.VideoCapture(0)
 sequence = deque(maxlen=50)  # 50 frames por secuencia

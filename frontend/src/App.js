@@ -1,4 +1,4 @@
-// src/App.js
+import { useState } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
@@ -10,6 +10,7 @@ import {
   CssBaseline,
   Box
 } from '@mui/material';
+import GestureNav from './components/GestureNav';
 
 import PracticeVowels from './components/PracticeVowel';
 import PracticeSequences from './components/PracticeSequences';
@@ -21,6 +22,7 @@ import TranslateGestures from './components/TranslateGestures';
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [gestureNavEnabled, setGestureNavEnabled] = useState(false);
 
   const tabs = [
     { label: 'Traducir Vocales', path: '/translatevowels' },
@@ -33,8 +35,20 @@ function App() {
 
   const currentTab = tabs.findIndex(tab => location.pathname.startsWith(tab.path));
 
-  const handleChange = (event, newValue) => {
+  const handleTabChange = (event, newValue) => {
     navigate(tabs[newValue].path);
+  };
+
+  const handleGestureNavigation = (direction) => {
+    let newIndex;
+    
+    if (direction === 'next') {
+      newIndex = (currentTab + 1) % tabs.length;
+    } else {
+      newIndex = (currentTab - 1 + tabs.length) % tabs.length;
+    }
+    
+    navigate(tabs[newIndex].path);
   };
 
   return (
@@ -47,58 +61,65 @@ function App() {
           boxShadow: '0 4px 12px rgba(25, 118, 210, 0.5)',
         }}
       >
-        <Toolbar sx={{ display: 'flex', justifyContent: 'flex-start', gap: 2 }}>
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 'bold',
-              letterSpacing: 1.2,
-              color: '#fff',
-              userSelect: 'none',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            LSC - Traductor
-          </Typography>
-
-          <Tabs
-            value={currentTab === -1 ? false : currentTab}
-            onChange={handleChange}
-            
-            indicatorColor="secondary"
-            variant="scrollable"
-            scrollButtons="auto"
-            sx={{
-              '.MuiTab-root': {
-                color: 'rgba(246, 239, 239, 0.8)',
-                textTransform: 'none',
-                fontWeight: 600,
-                paddingX: 2,
-                borderRadius: '12px',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  color: '#fff',
-                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                  boxShadow: '0 2px 8px rgba(255,255,255,0.3)',
-                },
-              },
-              '.Mui-selected': {
-                color: '#fff !important',
+        <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography
+              variant="h6"
+              sx={{
                 fontWeight: 'bold',
-                backgroundColor: 'rgba(255, 255, 255, 0.25)',
-                boxShadow: '0 4px 12px rgba(255, 255, 255, 0.4)',
-              },
-              '.MuiTabs-indicator': {
-                height: '4px',
-                borderRadius: '4px',
-                backgroundColor: '#ffeb3b',
-              },
-            }}
-          >
-            {tabs.map((tab, idx) => (
-              <Tab key={idx} label={tab.label} />
-            ))}
-          </Tabs>
+                letterSpacing: 1.2,
+                color: '#fff',
+                userSelect: 'none',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              LSC - Traductor
+            </Typography>
+
+            <Tabs
+              value={currentTab === -1 ? false : currentTab}
+              onChange={handleTabChange}
+              indicatorColor="secondary"
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{
+                '.MuiTab-root': {
+                  color: 'rgba(246, 239, 239, 0.8)',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  paddingX: 2,
+                  borderRadius: '12px',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    color: '#fff',
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    boxShadow: '0 2px 8px rgba(255,255,255,0.3)',
+                  },
+                },
+                '.Mui-selected': {
+                  color: '#fff !important',
+                  fontWeight: 'bold',
+                  backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                  boxShadow: '0 4px 12px rgba(255, 255, 255, 0.4)',
+                },
+                '.MuiTabs-indicator': {
+                  height: '4px',
+                  borderRadius: '4px',
+                  backgroundColor: '#ffeb3b',
+                },
+              }}
+            >
+              {tabs.map((tab, idx) => (
+                <Tab key={idx} label={tab.label} />
+              ))}
+            </Tabs>
+          </Box>
+
+          <GestureNav 
+            enabled={gestureNavEnabled}
+            onStatusChange={setGestureNavEnabled}
+            onNavigate={handleGestureNavigation}
+          />
         </Toolbar>
       </AppBar>
 
