@@ -9,6 +9,7 @@ const GestureNav = ({ onNavigate, onStatusChange, enabled }) => {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const videoRef = useRef(null);
   const processingRef = useRef(false);
+  const lastGestureTimeRef = useRef(0); // Para evitar detecciones rápidas
 
   useEffect(() => {
     if (enabled) {
@@ -21,7 +22,13 @@ const GestureNav = ({ onNavigate, onStatusChange, enabled }) => {
   const enableGestureNav = async () => {
     setLoading(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          width: 640, 
+          height: 480,
+          facingMode: 'user' 
+        } 
+      });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         showFeedback('Navegación por gestos activada');
@@ -43,6 +50,10 @@ const GestureNav = ({ onNavigate, onStatusChange, enabled }) => {
 
   const processFrame = async () => {
     if (!enabled || processingRef.current || !videoRef.current) return;
+    
+    // Evitar procesamiento rápido (mínimo 500ms entre gestos)
+    const now = Date.now();
+    if (now - lastGestureTimeRef.current < 500) return;
 
     processingRef.current = true;
     
@@ -63,6 +74,7 @@ const GestureNav = ({ onNavigate, onStatusChange, enabled }) => {
       const data = await response.json();
 
       if (data.status === 'predicted') {
+        lastGestureTimeRef.current = now;
         handleGesture(data.label);
       }
     } catch (error) {
@@ -73,15 +85,14 @@ const GestureNav = ({ onNavigate, onStatusChange, enabled }) => {
   };
 
   const handleGesture = (gesture) => {
-    switch(gesture) {
-      case 'swipe_left':
+    switch(gesture.toLowerCase()) {
+      case 'izquierda':
+      case 'left':
         onNavigate?.('next');
         break;
-      case 'swipe_right':
+      case 'derecha':
+      case 'right':
         onNavigate?.('prev');
-        break;
-      case 'ok_sign':
-        onNavigate?.('select');
         break;
       default:
         break;
@@ -131,11 +142,11 @@ const GestureNav = ({ onNavigate, onStatusChange, enabled }) => {
 
       <Snackbar
         open={openSnackbar}
-        autoHideDuration={3000}
+        autoHideDuration={1500}
         onClose={() => setOpenSnackbar(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert severity={enabled ? 'info' : 'warning'}>
+        <Alert severity="info" sx={{ width: '100%' }}>
           {message}
         </Alert>
       </Snackbar>
