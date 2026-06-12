@@ -17,6 +17,7 @@ import PracticeNumbers from './components/PracticeNumbers';
 import TranslateVowels from './components/TranslateVowels';
 import TranslateNumbers from './components/TranslateNumbers';
 import TranslateGestures from './components/TranslateGestures';
+import EvaluateSkills from './components/EvaluateSkills';
 
 function App() {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ function App() {
     { label: 'Práctica Vocales', path: '/practicevowel' },
     { label: 'Práctica Gestos', path: '/practicegestures' },
     { label: 'Práctica Números', path: '/practicenumbers' },
+    { label: 'Evalúa tus habilidades', path: '/evaluateskills' },
   ];
 
   const currentTab = tabs.findIndex(tab => location.pathname.startsWith(tab.path));
@@ -111,6 +113,7 @@ function App() {
             <Route path="/practicevowel" element={<PracticeVowels />} />
             <Route path="/practicegestures" element={<PracticeSequences />} />
             <Route path="/practicenumbers" element={<PracticeNumbers />} />
+            <Route path="/evaluateskills" element={<EvaluateSkills />} />
             <Route path="*" element={<Typography align="center">Selecciona una opción en el menú</Typography>} />
           </Routes>
         </Box>

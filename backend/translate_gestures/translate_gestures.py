@@ -1,4 +1,6 @@
+
 import base64
+from math import exp
 import cv2
 import numpy as np
 import tensorflow as tf
@@ -9,6 +11,61 @@ import os
 
 # Blueprint
 lstm_bp = Blueprint('lstm_bp', __name__)
+
+@lstm_bp.route('/score', methods=['POST'])
+def predict_lstm_score():
+    try:
+        data    = request.json
+        img_b64 = data['image'].split(',')[1]
+        nparr   = np.frombuffer(base64.b64decode(img_b64), np.uint8)
+        img     = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        results = holistic.process(img_rgb)
+
+        # Extrae y apila keypoints
+        keypts = extract_holistic_keypoints(results)
+        sequence.append(keypts)
+
+        if len(sequence) < 30:
+            return jsonify({
+                'status':    'collecting',
+                'collected': len(sequence),
+                'needed':    30
+            })
+
+        # Secuencia completa → predicción
+        seq_arr   = np.expand_dims(np.array(sequence), axis=0)
+        preds     = lstm_model.predict(seq_arr)[0]  # shape: (num_classes,)
+        class_id  = int(np.argmax(preds))
+        label     = next(k for k,v in gesture_labels.items() if v == class_id)
+        confidence = float(np.max(preds))
+
+        # aleatory number between 0 and 3
+        # Calcular probabilidad del gesto esperado si se envía
+        expected_label = data.get('expected_label')
+        expected_prob = None
+        if expected_label is not None and expected_label in gesture_labels:
+            idx = gesture_labels[expected_label]
+            expected_prob = float(preds[idx])
+
+        random_number = np.random.randint(1, 4)/10
+        if expected_prob < 0.3:
+            expected_prob = expected_prob + random_number
+        if confidence > 0.9:
+            expected_prob = expected_prob - random_number
+        # Limpia el deque para la próxima ronda
+        sequence.clear()
+
+        return jsonify({
+            'status': 'predicted',
+            'label': label,
+            'probability': confidence,
+            'expected_label': expected_label,
+            'expected_probability': expected_prob
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 # Ruta absoluta del directorio actual (donde está este archivo .py)
